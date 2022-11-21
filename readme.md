@@ -20,6 +20,28 @@ def explicitToString = {
 }
 ```
 
+Also `any2stringadd` and string synthetic addition should prevent an implicit `toString` on a case class:
+
+```scala
+def lit2Add: String = {
+  val foo = Foo("name")
+  "" + foo  // assert: DisableCaseClassToString
+}
+
+def method2Add: String = {
+  val foo = Foo("name")
+  stringMethod + foo // assert: DisableCaseClassToString
+}
+
+def stillString: String = {
+  val foo = Foo("name")
+  // any2stringadd(foo)
+  foo + stringMethod // assert: DisableCaseClassToString
+}
+```
+
+## Configuration
+
 ```hocon
 rules = [
   DisableCaseClassToString
