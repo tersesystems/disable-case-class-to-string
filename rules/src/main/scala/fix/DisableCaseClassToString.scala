@@ -3,14 +3,11 @@ package fix
 import scalafix.v1._
 import scala.meta._
 
-object code {
-  def apply(s: String): String = s"`$s`"
-}
-
 case class ToString(term: Term) extends Diagnostic {
   override def position: Position = term.pos
-  override def message: String =
-    s"Case classes cannot use ${code(s"${term.syntax}")}}"
+  override def message: String = {
+    s"Case classes cannot use ${"`${term.syntax}`"}}"
+  }
 }
 
 case class Interp(term: Term) extends Diagnostic {
@@ -37,10 +34,16 @@ class DisableCaseClassToString extends SemanticRule("DisableCaseClassToString") 
         args.map { a =>
           if (isCaseClass(a)) Patch.lint(Interp(a)) else Patch.empty
         }.asPatch
-      case _ =>
+      case applyInfix@Term.ApplyInfix(lhs, Term.Name("+"), _, args) =>
+        println(s"applyInfix = ${applyInfix.syntax} = ${applyInfix.structure}")
+        args.map { a =>
+            if (isCaseClass(a)) Patch.lint(Interp(a)) else Patch.empty
+          }.asPatch
         Patch.empty
     }.asPatch
   }
+
+  private val any2stringaddPlusString = SymbolMatcher.exact("scala/Predef.any2stringadd#`+`().")
 
   def isCaseClass(term: Term)(implicit doc: SemanticDocument): Boolean = {
     def isCase(tpe: SemanticType) = {
