@@ -1,7 +1,27 @@
-# Scalafix rules for disable-product-to-string
+# Scalafix rules for DisableCaseClassToString
 
-To develop rule:
+This is a Scalafix rule that disables the `toString` method on case classes, preventing leaks of sensitive information.
+
+Both explicit `toString` and string interpolation are disabled:
+
+```scala
+def explicitToString = {
+  val foo = Foo("name")
+  foo.toString // assert DisableCaseClassToString
+}
 ```
-sbt ~tests/test
-# edit rules/src/main/scala/fix/Disableproducttostring.scala
+
+asserts, as does:
+
+```scala
+def explicitToString = {
+  val foo = Foo("name")
+  s"$foo" // assert DisableCaseClassToString
+}
+```
+
+```hocon
+rules = [
+  DisableCaseClassToString
+]
 ```

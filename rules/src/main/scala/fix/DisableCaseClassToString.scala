@@ -19,7 +19,7 @@ case class Interp(term: Term) extends Diagnostic {
     s"Case classes cannot use toString in interpolation."
 }
 
-class DisableProductToString extends SemanticRule("DisableProductToString") {
+class DisableCaseClassToString extends SemanticRule("DisableCaseClassToString") {
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {

@@ -3,19 +3,19 @@ lazy val V = _root_.scalafix.sbt.BuildInfo
 lazy val rulesCrossVersions = Seq(V.scala213, V.scala212)
 lazy val scala3Version = "3.2.1"
 
-ThisBuild / homepage     := Some(url("https://github.com/tersesystems/disable-product-to-string"))
+ThisBuild / homepage     := Some(url("https://github.com/tersesystems/disable-case-class-to-string"))
 ThisBuild / startYear := Some(2022)
 ThisBuild / licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 ThisBuild / scmInfo := Some(
   ScmInfo(
-    url("https://github.com/tersesystems/disable-product-to-string"),
-    "scm:git@github.com:tersesystems/disable-product-to-string.git"
+    url("https://github.com/tersesystems/disable-case-class-to-string"),
+    "scm:git@github.com:tersesystems/disable-case-class-to-string.git"
   )
 )
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 
-lazy val `disable-product-to-string` = (project in file("."))
+lazy val `disable-case-class-to-string` = (project in file("."))
   .aggregate(
     rules.projectRefs ++
       input.projectRefs ++
