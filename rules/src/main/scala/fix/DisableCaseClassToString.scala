@@ -34,8 +34,10 @@ class DisableCaseClassToString extends SemanticRule("DisableCaseClassToString") 
         args.map { a =>
           if (isCaseClass(a)) Patch.lint(Interp(a)) else Patch.empty
         }.asPatch
-      case applyInfix@Term.ApplyInfix(lhs, Term.Name("+"), _, args) =>
-        println(s"applyInfix = ${applyInfix.syntax} = ${applyInfix.structure}")
+      case infixPlus@Term.ApplyInfix(lhs, Term.Name("+"), _, args) =>
+        //println(s"applyInfix = ${infixPlus.syntax} = ${infixPlus.structure}")
+        //println(".syntheticOperators = " + infixPlus.syntheticOperators)
+        //println(".structure         = " + infixPlus.syntheticOperators.structure)
         args.map { a =>
             if (isCaseClass(a)) Patch.lint(Interp(a)) else Patch.empty
           }.asPatch
@@ -56,24 +58,26 @@ class DisableCaseClassToString extends SemanticRule("DisableCaseClassToString") 
       }
     }
 
-    term.symbol.info.get.signature match {
-      case ValueSignature(tpe) =>
-        // println(s"isCaseClass ValueSignature tpe = $tpe")
-        isCase(tpe)
-      case MethodSignature(_, _, tpe) =>
-        // println(s"isCaseClass methodSignature value = $value case = ${value.isCase}")
-        isCase(tpe)
-      case ClassSignature(_, parents, _, _) =>
-        // println(s"isCaseClass classSignature ${parents.head}")
-        parents.head match {
-          case TypeRef(_, _, typeArguments) =>
-            isCase(typeArguments.last)
-          case _ =>
-            false
-        }
-      case other =>
-        // println(s"isCaseClass: other structure = ${other.structure}")
-        false
+    term.symbol.info.exists { info =>
+      info.signature match {
+        case ValueSignature(tpe) =>
+          // println(s"isCaseClass ValueSignature tpe = $tpe")
+          isCase(tpe)
+        case MethodSignature(_, _, tpe) =>
+          // println(s"isCaseClass methodSignature value = $value case = ${value.isCase}")
+          isCase(tpe)
+        case ClassSignature(_, parents, _, _) =>
+          // println(s"isCaseClass classSignature ${parents.head}")
+          parents.head match {
+            case TypeRef(_, _, typeArguments) =>
+              isCase(typeArguments.last)
+            case _ =>
+              false
+          }
+        case other =>
+          // println(s"isCaseClass: other structure = ${other.structure}")
+          false
+      }
     }
   }
 }

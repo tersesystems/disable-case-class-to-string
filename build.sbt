@@ -14,6 +14,7 @@ ThisBuild / scmInfo := Some(
 )
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
+//ThisBuild / semanticdbIncludeInJar := true
 
 lazy val `disable-case-class-to-string` = (project in file("."))
   .aggregate(
@@ -36,7 +37,7 @@ lazy val rules = projectMatrix
 
 lazy val input = projectMatrix
   .settings(
-    publish / skip := true
+    publish / skip := true,
   )
   .defaultAxes(VirtualAxis.jvm)
   .jvmPlatform(scalaVersions = rulesCrossVersions :+ scala3Version)
