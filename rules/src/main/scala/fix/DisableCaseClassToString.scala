@@ -34,13 +34,15 @@ class DisableCaseClassToString extends SemanticRule("DisableCaseClassToString") 
         args.map { a =>
           if (isCaseClass(a)) Patch.lint(Interp(a)) else Patch.empty
         }.asPatch
+
       case infixPlus@Term.ApplyInfix(lhs, Term.Name("+"), _, args) =>
         //println(s"applyInfix = ${infixPlus.syntax} = ${infixPlus.structure}")
         args.map { a =>
             if (isCaseClass(a)) Patch.lint(Interp(a)) else Patch.empty
           }.asPatch
+
       case other =>
-        //println(s"${other.syntax} = ${other.structure}")
+        //println(s"${other.structure}")
         Patch.empty
     }.asPatch
   }
