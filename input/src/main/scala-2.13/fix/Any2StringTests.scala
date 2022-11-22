@@ -5,22 +5,17 @@ package fix
 
 class Any2StringTests {
 
-  def lit2Add: String = {
-    val foo = Foo("name")
-    "" + foo // assert: DisableCaseClassToString
-  }
-
-  def method2Add: String = {
-    val foo = Foo("name")
-    stringMethod + foo // assert: DisableCaseClassToString
-  }
-
-  def stillString: String = {
+  def implicitAny2stringAdd: Unit = {
     val foo = Foo("name")
     // any2stringadd(foo)
-    foo + (stringMethod) // assert: DisableCaseClassToString
+    val s = foo + "" // assert: DisableCaseClassToString
+    println(s)
   }
 
-  def stringMethod: String = ""
+  def explicitAny2StringAdd: Unit = {
+    val foo = Foo("name")
+    val s = any2stringadd(foo) + "" // assert: DisableCaseClassToString
+    println(s)
+  }
 
 }

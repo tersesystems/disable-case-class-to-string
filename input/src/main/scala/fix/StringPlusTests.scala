@@ -5,14 +5,16 @@ package fix
 
 class StringPlusTests {
 
-  def lit2Add: String = {
+  def lit2Add: Unit = {
     val foo = Foo("name")
-    "" + foo // assert: DisableCaseClassToString
+    val s = "" + foo // assert: DisableCaseClassToString
+    println(s)
   }
 
-  def method2Add: String = {
+  def method2Add: Unit = {
     val foo = Foo("name")
-    stringMethod + foo // assert: DisableCaseClassToString
+    val s = stringMethod + foo // assert: DisableCaseClassToString
+    println(s)
   }
 
   def stringMethod: String = ""
