@@ -6,7 +6,7 @@ import scala.meta._
 case class ToString(term: Term) extends Diagnostic {
   override def position: Position = term.pos
   override def message: String = {
-    s"Case classes cannot use ${"`${term.syntax}`"}}"
+    s"Case classes cannot call `${term.syntax}.toString` explicitly"
   }
 }
 

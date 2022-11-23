@@ -1,6 +1,6 @@
 lazy val V = _root_.scalafix.sbt.BuildInfo
 
-lazy val rulesCrossVersions = Seq(V.scala213, V.scala212)
+lazy val rulesCrossVersions = Seq(V.scala213, V.scala212, V.scala211)
 lazy val scala3Version = "3.2.1"
 
 ThisBuild / homepage     := Some(url("https://github.com/tersesystems/disable-case-class-to-string"))
@@ -14,7 +14,6 @@ ThisBuild / scmInfo := Some(
 )
 ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
-//ThisBuild / semanticdbIncludeInJar := true
 
 def scalacOptionsVersion(scalaVersion: String): Seq[String] = {
   (CrossVersion.partialVersion(scalaVersion) match {
@@ -25,7 +24,7 @@ def scalacOptionsVersion(scalaVersion: String): Seq[String] = {
     case Some((2, n)) if n == 12 =>
       Seq("-P:semanticdb:synthetics:on")
     case Some((2, n)) if n == 11 =>
-      Seq.empty
+      Seq("-P:semanticdb:synthetics:on")
   })
 }
 
