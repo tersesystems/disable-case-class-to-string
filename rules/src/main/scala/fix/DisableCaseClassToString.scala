@@ -36,18 +36,45 @@ class DisableCaseClassToString extends SemanticRule("DisableCaseClassToString") 
         }.asPatch
 
       case infixPlus@Term.ApplyInfix(lhs, Term.Name("+"), _, args) =>
-        //println(s"applyInfix = ${infixPlus.syntax} = ${infixPlus.structure}")
         args.map { a =>
             if (isCaseClass(a)) Patch.lint(Interp(a)) else Patch.empty
-          }.asPatch
+        }.asPatch
 
-      case other =>
-        //println(s"${other.structure}")
-        Patch.empty
+      case other: Term =>
+        if (other.synthetics.nonEmpty) {
+          println(s"other.synthetics = ${other.synthetics}")
+          val tree = other.synthetics.head
+          tree match {
+            case treeMatch =>
+              /*
+              treeMatch = TypeApplyTree(
+                OriginalTree(Term.Name("any2stringadd")),
+                List(TypeRef(NoType, Symbol("fix/Foo#"), List()))
+              )
+               */
+
+              /*
+              treeMatch = ApplyTree(
+                TypeApplyTree(
+                  SelectTree(
+                    IdTree(SymbolInformation(scala/Predef. => final object Predef extends LowPriorityImplicits { +73 decls })),
+                    IdTree(SymbolInformation(scala/Predef.any2stringadd(). => @deprecated @<?> final implicit method any2stringadd[A](self: A): any2stringadd[A]))
+                  ),
+                  List(TypeRef(NoType, Symbol("fix/Foo#"), List()))
+                ),
+                List(OriginalTree(Term.Name("foo")))
+              )
+               */
+              println(s"treeMatch = ${treeMatch.structure}")
+              Patch.empty
+          }
+        } else {
+          Patch.empty
+        }
     }.asPatch
   }
 
-  private val any2stringaddPlusString = SymbolMatcher.exact("scala/Predef.any2stringadd#`+`().")
+  private val any2stringaddPlusString: SymbolMatcher = SymbolMatcher.exact("scala/Predef.any2stringadd#`+`().")
 
   def isCaseClass(term: Term)(implicit doc: SemanticDocument): Boolean = {
     def isCase(tpe: SemanticType) = {

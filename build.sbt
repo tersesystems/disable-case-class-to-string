@@ -16,6 +16,19 @@ ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 //ThisBuild / semanticdbIncludeInJar := true
 
+def scalacOptionsVersion(scalaVersion: String): Seq[String] = {
+  (CrossVersion.partialVersion(scalaVersion) match {
+    case Some((3, n)) =>
+      Seq.empty
+    case Some((2, n)) if n >= 13 =>
+      Seq("-P:semanticdb:synthetics:on")
+    case Some((2, n)) if n == 12 =>
+      Seq("-P:semanticdb:synthetics:on")
+    case Some((2, n)) if n == 11 =>
+      Seq.empty
+  })
+}
+
 lazy val `disable-case-class-to-string` = (project in file("."))
   .aggregate(
     rules.projectRefs ++
@@ -30,7 +43,8 @@ lazy val `disable-case-class-to-string` = (project in file("."))
 lazy val rules = projectMatrix
   .settings(
     moduleName := "scalafix",
-    libraryDependencies += "ch.epfl.scala" %% "scalafix-core" % V.scalafixVersion
+    libraryDependencies += "ch.epfl.scala" %% "scalafix-core" % V.scalafixVersion,
+    scalacOptions := scalacOptionsVersion(scalaVersion.value)
   )
   .defaultAxes(VirtualAxis.jvm)
   .jvmPlatform(rulesCrossVersions)
@@ -38,13 +52,15 @@ lazy val rules = projectMatrix
 lazy val input = projectMatrix
   .settings(
     publish / skip := true,
+    scalacOptions := scalacOptionsVersion(scalaVersion.value)
   )
   .defaultAxes(VirtualAxis.jvm)
   .jvmPlatform(scalaVersions = rulesCrossVersions :+ scala3Version)
 
 lazy val output = projectMatrix
   .settings(
-    publish / skip := true
+    publish / skip := true,
+    scalacOptions := scalacOptionsVersion(scalaVersion.value)
   )
   .defaultAxes(VirtualAxis.jvm)
   .jvmPlatform(scalaVersions = rulesCrossVersions :+ scala3Version)
@@ -71,7 +87,8 @@ lazy val tests = projectMatrix
     scalafixTestkitInputScalacOptions :=
       TargetAxis.resolve(input, Compile / scalacOptions).value,
     scalafixTestkitInputScalaVersion :=
-      TargetAxis.resolve(input, Compile / scalaVersion).value
+      TargetAxis.resolve(input, Compile / scalaVersion).value,
+    scalacOptions := scalacOptionsVersion(scalaVersion.value)
   )
   .defaultAxes(
     rulesCrossVersions.map(VirtualAxis.scalaABIVersion) :+ VirtualAxis.jvm: _*
