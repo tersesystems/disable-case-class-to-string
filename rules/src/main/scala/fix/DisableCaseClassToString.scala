@@ -13,7 +13,14 @@ case class ToString(term: Term) extends Diagnostic {
 case class Interp(term: Term) extends Diagnostic {
   override def position: Position = term.pos
   override def message: String =
-    s"Case classes cannot use toString in interpolation."
+    s"Case class ${term} cannot use toString in interpolation."
+}
+
+case class Any2String(term: Term) extends Diagnostic {
+  override def position: Position = term.pos
+
+  override def message: String =
+    s"Case class ${term} cannot use implicit any2stringadd."
 }
 
 class DisableCaseClassToString extends SemanticRule("DisableCaseClassToString") {
@@ -42,30 +49,14 @@ class DisableCaseClassToString extends SemanticRule("DisableCaseClassToString") 
 
       case other: Term =>
         if (other.synthetics.nonEmpty) {
-          println(s"other.synthetics = ${other.synthetics}")
-          val tree = other.synthetics.head
-          tree match {
-            case treeMatch =>
-              /*
-              treeMatch = TypeApplyTree(
-                OriginalTree(Term.Name("any2stringadd")),
-                List(TypeRef(NoType, Symbol("fix/Foo#"), List()))
-              )
-               */
-
-              /*
-              treeMatch = ApplyTree(
-                TypeApplyTree(
-                  SelectTree(
-                    IdTree(SymbolInformation(scala/Predef. => final object Predef extends LowPriorityImplicits { +73 decls })),
-                    IdTree(SymbolInformation(scala/Predef.any2stringadd(). => @deprecated @<?> final implicit method any2stringadd[A](self: A): any2stringadd[A]))
-                  ),
-                  List(TypeRef(NoType, Symbol("fix/Foo#"), List()))
-                ),
-                List(OriginalTree(Term.Name("foo")))
-              )
-               */
-              println(s"treeMatch = ${treeMatch.structure}")
+          other.synthetics.head match {
+            case ApplyTree(TypeApplyTree(SelectTree(_, id), List(typeRef: TypeRef)), _) =>
+              if (any2stringaddPlusString.matches(id.info.symbol) && typeRef.symbol.info.exists(_.isCase)) {
+                Patch.lint(Any2String(other))
+              } else {
+                Patch.empty
+              }
+            case _ =>
               Patch.empty
           }
         } else {
@@ -74,7 +65,7 @@ class DisableCaseClassToString extends SemanticRule("DisableCaseClassToString") 
     }.asPatch
   }
 
-  private val any2stringaddPlusString: SymbolMatcher = SymbolMatcher.exact("scala/Predef.any2stringadd#`+`().")
+  private val any2stringaddPlusString: SymbolMatcher = SymbolMatcher.exact("scala/Predef.any2stringadd().")
 
   def isCaseClass(term: Term)(implicit doc: SemanticDocument): Boolean = {
     def isCase(tpe: SemanticType) = {

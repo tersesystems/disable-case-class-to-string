@@ -13,10 +13,10 @@ class Any2StringTests {
     println(s)
   }
 
-  def explicitAny2StringAdd: Unit = {
-    val foo = Foo("name")
-      val s = any2stringadd(foo) + "" // assert: DisableCaseClassToString
-    println(s)
-  }
+  //  def explicitAny2StringAdd: Unit = {
+  //    val foo = Foo("name")
+  //    val s = any2stringadd(foo) + "" // assert: DisableCaseClassToString
+  //    println(s)
+  //  }
 
 }
