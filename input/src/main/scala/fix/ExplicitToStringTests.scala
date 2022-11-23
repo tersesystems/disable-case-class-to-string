@@ -17,6 +17,11 @@ object ExplicitToStringTests {
     fooMethod.toString // assert: DisableCaseClassToString
   }
 
+  def valueOf: String = {
+    val foo = Foo("foo")
+    String.valueOf(foo) // assert: DisableCaseClassToString
+  }
+
   def fooMethod: Foo = Foo("foo")
 }
 
