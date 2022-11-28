@@ -70,36 +70,6 @@ object ExplicitToStringTests {
     String.valueOf(foo) // assert: DisableCaseClassToString
   }
 
-  def seqMkString: String = {
-    val foo = Foo("foo")
-    Seq(foo).mkString // assert: DisableCaseClassToString
-  }
-
-  def seqMkStringSafe: String = {
-    val foo = "foo"
-    Seq(foo).mkString
-  }
-
-  def seqToString: String = {
-    val foo = Foo("foo")
-    Seq(foo).toString // assert: DisableCaseClassToString
-  }
-
-  def seqToStringSafe: String = {
-    val foo = "foo"
-    Seq(foo).toString
-  }
-
-  def mapToString: String = {
-    val foo = Foo("foo")
-    Map("foo" -> foo).toString // assert: DisableCaseClassToString
-  }
-
-  def mapToStringSafe: String = {
-    val foo = "foo"
-    Map("foo" -> foo).toString // assert: DisableCaseClassToString
-  }
-
   def fooMethod: Foo = Foo("foo")
 }
 
