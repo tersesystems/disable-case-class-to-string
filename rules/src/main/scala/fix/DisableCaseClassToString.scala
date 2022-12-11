@@ -26,11 +26,11 @@ case class Any2String(term: Term) extends Diagnostic {
 // https://github.com/vovapolu/scaluzzi/blob/master/scalafix/rules/src/main/scala/scalafix/internal/scaluzzi/Disable.scala
 class DisableCaseClassToString extends SemanticRule("DisableCaseClassToString") {
 
-  private val verbose = false
+  private val verbose = true
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
-      case select@Term.Select(term, Term.Name("toString")) =>
+      case Term.Select(term, Term.Name("toString")) =>
         term match {
           case name: Term.Name =>
             // Term.Select(Term.Name("seq"), Term.Name("toString"))
@@ -53,6 +53,14 @@ class DisableCaseClassToString extends SemanticRule("DisableCaseClassToString") 
 
       case Term.Interpolate(Term.Name("s"), _, args) =>
         args.map { a =>
+          // XXX this needs to cover the fix method
+          /*
+            a = Term.Select(
+            Term.Apply(Term.Name("Foo"), List(Lit.String("foo"))),
+            Term.Name("toString")
+          )
+            */
+          println(s"fix: interpolate a = ${a.structure}")
           if (isMatchingTerm(a)) Patch.lint(Interp(a)) else Patch.empty
         }.asPatch
 
@@ -86,98 +94,17 @@ class DisableCaseClassToString extends SemanticRule("DisableCaseClassToString") 
   private val any2stringaddPlusString: SymbolMatcher = SymbolMatcher.exact("scala/Predef.any2stringadd().")
 
   def isMatchingTerm(term: Term)(implicit doc: SemanticDocument): Boolean = {
-    def isCase(tpe: SemanticType) = {
-      tpe match {
-        case TypeRef(_, symbol, _) =>
-          symbol.info.get.isCase
-        case other =>
-          // println(s"isCaseClass tpe = $tpe other = $other")
-          false
-      }
-    }
+    println(s"isMatchingTerm: term = ${term.structure}")
 
-    def isIterable(tpe: SemanticType) = {
-      tpe match {
-        case TypeRef(_, symbol, typeArguments) =>
-          symbol.info.exists { info =>
-            if (verbose) {
-              println(s"isIterable typeArguments = $typeArguments")
-            }
-            info.signature match {
-              case TypeSignature(_, TypeRef(_, symbol, _), _) =>
-                // Seq[Foo] is matched by being an Iterable with List(Foo)
-                getParentSymbols(symbol).exists(iterableMatcher.matches) && typeArguments.exists(isCase)
-              case _ =>
-                false
-            }
-          }
-        case _ =>
-          false
-      }
-    }
-
-    def isName(name: Term.Name) = {
-      name.symbol.info.exists { info =>
-        info.signature match {
-          case ValueSignature(tpe) =>
-            val caseClassResult = isCase(tpe)
-            val iterResult = isIterable(tpe)
-            if (verbose) {
-              println(s"isCaseClass ValueSignature tpe = $tpe isCaseClass = $caseClassResult iterResult = $iterResult")
-            }
-            caseClassResult || iterResult
-          case MethodSignature(typeParameters, parameterLists, tpe) =>
-            if (verbose) {
-              println(s"isCaseClass methodSignature typeParameters = $typeParameters parameterLists = ${parameterLists}")
-            }
-            isCase(tpe)
-          case ClassSignature(_, parents, _, _) =>
-            if (verbose) {
-              println(s"isCaseClass classSignature ${parents.head}")
-            }
-            parents.head match {
-              case TypeRef(_, _, typeArguments) =>
-                isCase(typeArguments.last)
-              case _ =>
-                false
-            }
-          case other =>
-            // println(s"isCaseClass: other structure = ${other.structure}")
-            false
-        }
-      }
-    }
-
-    def isApply(fun: Term) = {
-      if (verbose) {
-        // fun = Seq
-        //
-        // https://scalacenter.github.io/scalafix/docs/developers/semantic-tree.html#look-up-inferred-type-parameter
-        println(s"isCaseClass apply fun.synthetics = ${fun.structure}")
-        println(s"isCaseClass apply fun.synthetics.structure = ${fun.synthetics.structure}")
-      }
-
-      if (fun.synthetics.nonEmpty) {
-        fun.synthetics.head match {
-          case TypeApplyTree(selectTree, List(TypeRef(_, symbol, _))) =>
-            if (verbose) {
-              println(s"isCaseClass apply selectTree = ${selectTree} isCase = ${symbol.info.get.isCase}")
-            }
-            (symbol.info.get.isCase)
-          case other =>
-            if (verbose) {
-              println(s"isCaseClass apply is not type apply tree = ${other}")
-            }
-            false
-        }
-      } else {
-        // Term.Apply(Term.Name("Seq"), List(Term.Name("foo")))
-        isMatchingTerm(fun)
-      }
-    }
+    /*
+    Term.Select(
+      Term.Apply(Term.Name("Foo"), List(Lit.String("foo"))),
+      Term.Name("toString")
+    )
+     */
 
     term match {
-      case Term.Apply(fun, args) =>
+      case Term.Apply(fun, _) =>
         isApply(fun)
 
       case name: Term.Name =>
@@ -191,7 +118,101 @@ class DisableCaseClassToString extends SemanticRule("DisableCaseClassToString") 
         Set(symbol) ++ parents.collect {
           case TypeRef(_, symbol, _) => getParentSymbols(symbol)
         }.flatten
+      case _ =>
+        Set.empty
     }
 
   private val iterableMatcher: SymbolMatcher = SymbolMatcher.normalized("scala.collection.Iterable")
+
+
+  def isCase(tpe: SemanticType)(implicit doc: SemanticDocument) = {
+    tpe match {
+      case TypeRef(_, symbol, _) =>
+        symbol.info.get.isCase
+      case other =>
+        // println(s"isCaseClass tpe = $tpe other = $other")
+        false
+    }
+  }
+
+  def isIterable(tpe: SemanticType)(implicit doc: SemanticDocument) = {
+    tpe match {
+      case TypeRef(_, symbol, typeArguments) =>
+        symbol.info.exists { info =>
+          if (verbose) {
+            println(s"isIterable typeArguments = $typeArguments")
+          }
+          info.signature match {
+            case TypeSignature(_, TypeRef(_, symbol, _), _) =>
+              // Seq[Foo] is matched by being an Iterable with List(Foo)
+              getParentSymbols(symbol).exists(iterableMatcher.matches) && typeArguments.exists(isCase)
+            case _ =>
+              false
+          }
+        }
+      case _ =>
+        false
+    }
+  }
+
+  def isName(name: Term.Name)(implicit doc: SemanticDocument) = {
+    name.symbol.info.exists { info =>
+      info.signature match {
+        case ValueSignature(tpe) =>
+          val caseClassResult = isCase(tpe)
+          val iterResult = isIterable(tpe)
+          if (verbose) {
+            println(s"isCaseClass ValueSignature tpe = $tpe isCaseClass = $caseClassResult iterResult = $iterResult")
+          }
+          caseClassResult || iterResult
+        case MethodSignature(typeParameters, parameterLists, tpe) =>
+          if (verbose) {
+            println(s"isCaseClass methodSignature typeParameters = $typeParameters parameterLists = ${parameterLists}")
+          }
+          isCase(tpe)
+        case ClassSignature(_, parents, _, _) =>
+          if (verbose) {
+            println(s"isCaseClass classSignature ${parents.head}")
+          }
+          parents.head match {
+            case TypeRef(_, _, typeArguments) =>
+              isCase(typeArguments.last)
+            case _ =>
+              false
+          }
+        case other =>
+          // println(s"isCaseClass: other structure = ${other.structure}")
+          false
+      }
+    }
+  }
+
+  def isApply(fun: Term)(implicit doc: SemanticDocument) = {
+    if (verbose) {
+      // fun = Seq
+      //
+      // https://scalacenter.github.io/scalafix/docs/developers/semantic-tree.html#look-up-inferred-type-parameter
+      println(s"isCaseClass apply fun.synthetics = ${fun.structure}")
+      println(s"isCaseClass apply fun.synthetics.structure = ${fun.synthetics.structure}")
+    }
+
+    if (fun.synthetics.nonEmpty) {
+      fun.synthetics.head match {
+        case TypeApplyTree(selectTree, List(TypeRef(_, symbol, _))) =>
+          if (verbose) {
+            println(s"isCaseClass apply selectTree = ${selectTree} isCase = ${symbol.info.get.isCase}")
+          }
+          (symbol.info.get.isCase)
+        case other =>
+          if (verbose) {
+            println(s"isCaseClass apply is not type apply tree = ${other}")
+          }
+          false
+      }
+    } else {
+      // Term.Apply(Term.Name("Seq"), List(Term.Name("foo")))
+      isMatchingTerm(fun)
+    }
+  }
+
 }

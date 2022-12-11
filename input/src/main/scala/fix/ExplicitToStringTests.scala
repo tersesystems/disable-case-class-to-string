@@ -24,40 +24,11 @@ object ExplicitToStringTests {
     either.toString // assert: DisableCaseClassToString
   }
 
-  def rightToStringSafe: String = {
-    val foo = "foo"
-    val either: Right[Nothing, String] = Right(foo)
-    either.toString
-  }
-
-  def leftToStringSafe: String = {
-    val foo = "foo"
-    val either: Left[String, Nothing] = Left(foo)
-    either.toString
-  }
-
   // Some/None are case classes...
   def optionToString: String = {
     val foo = Foo("foo")
     val opt = Option(foo)
     opt.toString // assert: DisableCaseClassToString
-  }
-
-  def optionToStringSafe: String = {
-    val foo = "foo"
-    val opt = Option(foo)
-    opt.toString
-  }
-
-  def someToStringSafe: String = {
-    val foo = "foo"
-    val opt = Some(foo)
-    opt.toString
-  }
-
-  def noneToStringSafe: String = {
-    val opt = None
-    opt.toString
   }
 
   def valueOf: String = {
